@@ -2,12 +2,18 @@
 
 [DeepL API](https://developers.deepl.com/docs) MCP — high-quality machine translation. Free tier 500k chars/mo.
 
-Part of [Pipeworx](https://pipeworx.io) — an MCP gateway connecting AI agents to 1476+ live data sources.
+Part of [Pipeworx](https://pipeworx.io) — an MCP gateway connecting AI agents to 1558+ live data sources.
 
 ## Auth
 
 - Platform: `PLATFORM_DEEPL_KEY`. BYO: `?_apiKey=…`.
 - Free-tier keys end with `:fx` (auto-detected → free endpoint).
+- **`translate` is currently refused on the Pipeworx shared key** (HTTP 456), and it is not a
+  character quota: measured 2026-08-28, `usage` on the same key answers
+  `character_count: 0` against a full `character_limit` while `translate` 456s in the next
+  call. Zero successes in the seven days before that. Waiting does not clear it — pass your
+  own key as `_apiKey`. The read-only tools (`usage`, `source_languages`, `target_languages`,
+  `glossary_language_pairs`) still answer on the shared key. Fleet #577.
 
 ## Tools
 
@@ -67,9 +73,35 @@ directly, instead of just this one's:
 }
 ```
 
-Both URLs reach the same gateway and the same 1476+ data sources. The
+Both URLs reach the same gateway and the same 1558+ data sources. The
 only difference is which pack's tools are listed **directly**; `ask_pipeworx`
 reaches all of them from either one.
+
+## Standalone (no gateway account)
+
+This package also runs as a local stdio MCP server — no Pipeworx account, no
+gateway round-trip:
+
+```json
+{
+  "mcpServers": {
+    "deepl": {
+      "command": "npx",
+      "args": ["-y", "@pipeworx/mcp-deepl"]
+    }
+  }
+}
+```
+
+Or run it directly to confirm it starts:
+
+```bash
+npx -y @pipeworx/mcp-deepl
+```
+
+It speaks MCP over stdin/stdout and answers `initialize`/`tools/list`/`tools/call`
+for **only** this pack's tools — none of the shared meta-tools the gateway
+connection above adds. Same source, same tools, no ask_pipeworx routing.
 
 ## Using with ask_pipeworx
 
