@@ -1,6 +1,6 @@
 {
   "name": "@pipeworx/mcp-deepl",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "DeepL MCP.",
   "type": "module",
   "main": "src/index.ts",
@@ -26,7 +26,7 @@
     "@cloudflare/workers-types": "^4.20260405.1"
   },
   "pipeworx": {
-    "sourceHash": "v1-51a2faa5fa5d0e53d9ce2b3850fc5069fb54ae8577372e145437ad01b447e8ce",
-    "sourceCommit": "56d3c46c09bb3078ffdbdbca992a93f406bcd382"
+    "sourceHash": "v1-24598ff4cd300c3f84080f1c338c1d273a39ad5f288f82e178adbf6450133951",
+    "sourceCommit": "6a059aca883e8bfd7869ca8892d720dd93a6b3c0"
   }
 }

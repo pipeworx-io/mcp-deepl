@@ -732,38 +732,42 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<un
       body: p.toString(),
     });
     if (res.status === 401 || res.status === 403) throw new Error('DeepL: invalid API key.');
-    // A 456 here was `upstream_throttled: DeepL 456 — translation quota
-    // exceeded.` and it was wrong twice over (fleet #577).
+    // A 456 here is EXACTLY WHAT DEEPL SAYS IT IS: the character quota is
+    // exhausted. This comment previously argued the opposite and the error
+    // message asserted it to callers, so read the history before changing it
+    // back.
     //
-    // Wrong as a THROTTLE: 25 failures over seven days with zero successes.
-    // Whatever this is, it is not a burst limit that clears while a caller
-    // waits, and `upstream_throttled` is the one class the fleet's problem-tool
-    // triage deliberately skips — so a dead tool sat in the bucket nobody reads,
-    // telling every caller to come back later.
+    // The original 456 handling said `upstream_throttled: translation quota
+    // exceeded` (fleet #577). That was rightly called wrong as a THROTTLE — 25
+    // failures over seven days with zero successes is not a burst limit that
+    // clears while a caller waits, and `upstream_throttled` is the one class
+    // the problem-tool triage deliberately skips, so a dead tool sat in the
+    // bucket nobody reads.
     //
-    // Wrong as a QUOTA, which is the more interesting half. Measured live
-    // 2026-08-28 on the same shared key, same base URL, one call apart:
+    // But the follow-up then also rejected it as a QUOTA, on this evidence:
     //   deepl_usage     -> { character_count: 0, character_limit: 1000000 }
     //   deepl_translate -> 456
-    // DeepL's own counter says nothing has been translated against a full
-    // allowance. Those two statements cannot both be about characters, so
-    // repeating DeepL's word "quota" to the caller asserted a cause we had not
-    // established — and pointed them at a reset that may not be what is
-    // happening.
+    // and reasoned "those two statements cannot both be about characters".
+    // They can, because ONE OF THEM IS WRONG, and it is not the 456.
     //
-    // So: stop paraphrasing and hand over what DeepL actually said. The body is
-    // read rather than discarded (the old line threw before touching it, which
-    // is why nobody could tell the two cases apart), and the sentence commits
-    // only to what is verifiable — translation is refused on the shared key,
-    // waiting has not fixed it, a caller's own key works right now.
+    // Settled 2026-10-01 against DeepL's own subscription dashboard: plan API
+    // Developer (free), usage period 2026-09-25 to 2026-10-25, characters
+    // included 1,000,000, and the banner reads "You used all of your
+    // characters. To translate more characters, upgrade your plan."
     //
-    // No `upstream_throttled:` token: naming `_apiKey` routes this to
-    // `auth_required`, which is the honest class for an access wall we do not
-    // hold the credential for and which a caller-supplied key clears today.
+    // So the quota IS exhausted, and `/v2/usage` is the liar — it reports
+    // character_count: 0 while the dashboard shows the full 1,000,000 consumed.
+    // Two of the three signals agree (dashboard + the 456); the usage endpoint
+    // is the outlier. DO NOT trust /v2/usage to decide whether this key has
+    // budget, and do not reason from it back to "this cannot be a quota".
+    //
+    // The cost of getting this wrong was not academic: the old message told
+    // every caller "there is no character budget to wait out", which was false
+    // and pointed them away from the one thing that actually resolves it.
     if (res.status === 456) {
       const detail = (await res.text().catch(() => '')).slice(0, 300).trim();
       throw new Error(
-        `DeepL refuses translation on the Pipeworx shared key (HTTP 456${detail ? `: ${detail}` : ''}). This is not a short throttle — it has not cleared in over a week, and DeepL's own usage endpoint reports 0 characters used against the key's full character_limit, so there is no character budget to wait out. Pass your own DeepL key as _apiKey and this call goes straight through (free tier at https://www.deepl.com/pro-api). The other tools in this pack (deepl_usage, source_languages, target_languages) still answer on the shared key.`,
+        `DeepL has refused translation on the Pipeworx shared key since the key's monthly character allowance ran out (HTTP 456${detail ? `: ${detail}` : ''}). It resets at the start of the next DeepL usage period, or sooner if the plan is upgraded. Note that \`deepl_usage\` will tell you 0 characters have been used — DeepL's /v2/usage endpoint under-reports on this plan and the subscription dashboard is the authority, so do not read that 0 as spare budget. Pass your own DeepL key as _apiKey and this call goes straight through (free tier at https://www.deepl.com/pro-api). The pack's other tools (deepl_usage, source_languages, target_languages, glossary_language_pairs) still answer on the shared key.`,
       );
     }
     if (!res.ok) throw await httpError(res, 'DeepL');
@@ -791,8 +795,21 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<un
         splitting_tags: args.splitting_tags,
         ignore_tags: args.ignore_tags,
       });
-    case 'usage':
-      return get('/usage');
+    case 'usage': {
+      // DO NOT return this bare. Measured 2026-10-01: /v2/usage reported
+      // character_count: 0 / character_limit: 1000000 on the shared key while
+      // DeepL's own subscription dashboard showed the full 1,000,000 consumed
+      // and translation refusing with 456. A caller asking "how much quota is
+      // left" was being told "all of it", which is the silent-wrong-answer
+      // class -- it is not an error, nothing goes red, and the number is false.
+      // The discrepancy is DeepL's, not ours (we read the documented fields),
+      // so the fix is to say so rather than to invent a corrected figure.
+      const u = (await get('/usage')) as Record<string, unknown>;
+      return {
+        ...u,
+        _caveat: 'DeepL /v2/usage is known to UNDER-REPORT on the free API Developer plan: it can return character_count: 0 while the subscription dashboard shows the allowance fully consumed and translation refuses with HTTP 456. Treat a low character_count here as unconfirmed — the dashboard at deepl.com is the authority, and a 456 from deepl_translate is better evidence of exhaustion than this field.',
+      };
+    }
     case 'source_languages':
       return get('/languages?type=source');
     case 'target_languages':
