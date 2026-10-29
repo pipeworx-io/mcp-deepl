@@ -1,0 +1,83 @@
+[
+  {
+    "name": "translate",
+    "description": "Translate one or more text strings using DeepL. Requires `text` (string or array) and `target_lang` (e.g. \"DE\", \"FR\", \"JA\"). Optionally specify `source_lang`, `formality` (more/less/prefer_more/prefer_less), `tag_handling` (html/xml), and `glossary_id`. Returns detected source language and translated text.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "description": "String or array of strings."
+        },
+        "target_lang": {
+          "type": "string"
+        },
+        "source_lang": {
+          "type": "string"
+        },
+        "split_sentences": {
+          "type": "string"
+        },
+        "preserve_formatting": {
+          "type": "boolean"
+        },
+        "formality": {
+          "type": "string"
+        },
+        "glossary_id": {
+          "type": "string"
+        },
+        "tag_handling": {
+          "type": "string"
+        },
+        "outline_detection": {
+          "type": "boolean"
+        },
+        "non_splitting_tags": {
+          "type": "string"
+        },
+        "splitting_tags": {
+          "type": "string"
+        },
+        "ignore_tags": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "target_lang"
+      ]
+    }
+  },
+  {
+    "name": "usage",
+    "description": "Current month's usage + limits.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "source_languages",
+    "description": "Supported source languages.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "target_languages",
+    "description": "Supported target languages.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "glossary_language_pairs",
+    "description": "Supported glossary language pairs.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  }
+]
