@@ -1,6 +1,6 @@
 {
   "name": "@pipeworx/mcp-deepl",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "DeepL MCP.",
   "type": "module",
   "main": "lib/index.js",
@@ -27,7 +27,7 @@
     "mode": "gateway",
     "slug": "deepl",
     "gatewaySlug": "deepl",
-    "sourceHash": "v1-67fb751bf1fb1b69e7ade92d9a85791dfacab51debd142e747cc69cd686d3f93",
-    "sourceCommit": "0b3faaa4d85299a961dd86dea75a0f0e1dad280c"
+    "sourceHash": "v1-a99dd4f776ea99e557fcdf8469e3edce8b8477a95aef5ab8778b04dcc6b1d611",
+    "sourceCommit": "e707a4bb6209f432984c0a83bf64b3138130db89"
   }
 }

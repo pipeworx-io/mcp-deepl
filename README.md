@@ -2,7 +2,7 @@
 
 [DeepL API](https://developers.deepl.com/docs) MCP — high-quality machine translation. Free tier 500k chars/mo.
 
-Part of [Pipeworx](https://pipeworx.io) — an MCP gateway connecting AI agents to 1856+ live data sources. This is an independent, unofficial integration — not affiliated with, endorsed by, or published by the upstream provider.
+Part of [Pipeworx](https://pipeworx.io) — an MCP gateway connecting AI agents to 1863+ live data sources. This is an independent, unofficial integration — not affiliated with, endorsed by, or published by the upstream provider.
 
 ## Auth
 
@@ -14,6 +14,9 @@ Part of [Pipeworx](https://pipeworx.io) — an MCP gateway connecting AI agents 
   call. Zero successes in the seven days before that. Waiting does not clear it — pass your
   own key as `_apiKey`. The read-only tools (`usage`, `source_languages`, `target_languages`,
   `glossary_language_pairs`) still answer on the shared key. Fleet #577.
+- **For translation with no key of your own right now, call `mymemory_translate`** (the
+  `mymemory` pack) — keyless outright, not dependent on a shared platform allowance. The
+  gateway also falls back to it automatically on this quota error (fleet #3862).
 
 ## Tools
 
@@ -73,7 +76,7 @@ directly, instead of just this one's:
 }
 ```
 
-Both URLs reach the same gateway and the same 1856+ data sources. The
+Both URLs reach the same gateway and the same 1863+ data sources. The
 only difference is which pack's tools are listed **directly**; `ask_pipeworx`
 reaches all of them from either one.
 
